@@ -28,6 +28,9 @@ Análise IPInfo
 <br>
 ![image](https://github.com/user-attachments/assets/a9670538-ec59-4b22-ae9f-3457207cfee4)
 
+Gerar query KQL (Kibana Query Language)
+<br>
+![image](https://github.com/user-attachments/assets/b96f0da6-1370-4551-a9dc-ec2f6628e209)
 
 ## Pré-requisitos
 
