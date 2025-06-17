@@ -1,6 +1,8 @@
 # SOC-Forge
 
-**SOC-Forge** é uma poderosa ferramenta de linha de comando (CLI) desenvolvida para analistas de SOC, permitindo a análise de endereços IP com múltiplas fontes de inteligência de ameaças. Oferece interfaces fáceis de usar para análise de IPs, geração de consultas KQL e criação de relatórios detalhados.
+**SOC-Forge** é uma ferramenta de linha de comando (CLI) desenvolvida para analistas de SOC, permitindo a análise de endereços IP com múltiplas fontes de inteligência de ameaças. Oferece interfaces fáceis de usar para análise de IPs, geração de consultas KQL e criação de relatórios simplificados.
+
+![image](https://github.com/user-attachments/assets/8cb60f6d-53d2-48c6-bfef-371813222593)
 
 ## Funcionalidades
 
@@ -12,6 +14,20 @@
 - 🔎 **Geração de Consultas KQL**: Gere consultas Kibana para IPs de origem, destino ou ambos
 - 📝 **Relatórios Detalhados**: Criação de relatórios completos de análise
 - 🛠️ **Configuração Fácil**: Instalação simples com script Python e configuração de ambiente
+
+Exemplos:
+Análise VirusTotal
+<br>
+![image](https://github.com/user-attachments/assets/efefc9e4-95a9-4ca0-acce-dc853ce4ee8f)
+
+Análise AbuseIPDB
+<br>
+![image](https://github.com/user-attachments/assets/12c1005f-f1e5-4f4c-bf0f-24138edb298c)
+
+Análise IPInfo
+<br>
+![image](https://github.com/user-attachments/assets/a9670538-ec59-4b22-ae9f-3457207cfee4)
+
 
 ## Pré-requisitos
 
