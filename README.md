@@ -1,84 +1,120 @@
 # SOC-Forge
 
-SOC-Forge is a powerful CLI tool designed for SOC analysts to analyze IP addresses using multiple threat intelligence sources. It provides easy-to-use interfaces for IP analysis, KQL query generation, and detailed report creation.
+**SOC-Forge** é uma poderosa ferramenta de linha de comando (CLI) desenvolvida para analistas de SOC, permitindo a análise de endereços IP com múltiplas fontes de inteligência de ameaças. Oferece interfaces fáceis de usar para análise de IPs, geração de consultas KQL e criação de relatórios detalhados.
 
-## Features
+## Funcionalidades
 
-- 🔍 **IP Analysis**: Analyze IPs using multiple threat intelligence sources:
+- 🔍 **Análise de IPs**: Analise endereços IP utilizando diversas fontes de inteligência:
   - VirusTotal
   - AbuseIPDB
   - IPInfo
-- 📊 **Interactive Interface**: User-friendly CLI with colored output
-- 🔎 **KQL Query Generation**: Generate Kibana queries for source IPs, destination IPs, or both
-- 📝 **Detailed Reports**: Generate comprehensive analysis reports
-- 🛠️ **Easy Setup**: Simple installation process with batch scripts
+- 📊 **Interface Interativa**: CLI amigável com saída colorida
+- 🔎 **Geração de Consultas KQL**: Gere consultas Kibana para IPs de origem, destino ou ambos
+- 📝 **Relatórios Detalhados**: Criação de relatórios completos de análise
+- 🛠️ **Configuração Fácil**: Instalação simples com script Python e configuração de ambiente
 
-## Installation
+## Pré-requisitos
 
-1. Clone this repository:
+- Python 3.7 ou superior
+- Git (para clonar o repositório)
+- Acesso à internet (para consultar as APIs)
+
+## Instalação
+
+1. Clone este repositório:
 ```powershell
-git clone https://github.com/yourusername/soc-forge.git
+git clone https://github.com/seunomeusuario/soc-forge.git
 cd soc-forge
 ```
 
-2. Run the installation script:
+2. Crie e ative um ambiente virtual Python (recomendado):
 ```powershell
-.\install.bat
+python -m venv .venv
+.\.venv\Scripts\Activate
 ```
 
-3. Configure your API keys:
-   - Copy `.env.example` to `.env`
-   - Replace the placeholder API keys with your actual keys from:
+3. Instale as dependências:
+```powershell
+pip install -r requirements.txt
+```
+
+4. Configure suas chaves de API:
+   - Copie o arquivo `.env.example` para `.env`:
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+   - Edite o arquivo `.env` e substitua as chaves de exemplo com suas chaves reais:
      - [VirusTotal](https://www.virustotal.com/gui/join-us)
      - [AbuseIPDB](https://www.abuseipdb.com/account/api)
      - [IPInfo](https://ipinfo.io/signup)
 
-## Usage
+## Uso
 
-1. Run the main script:
+1. Execute o script principal:
 ```powershell
 python query.py
 ```
 
-2. Use the interactive menu to:
-   - Input IP addresses (supports multiple formats)
-   - List extracted IPs
-   - Analyze IPs using various services
-   - Generate KQL queries
-   - Create detailed analysis reports
+2. Use o menu interativo para:
+   - Inserir endereços IP (suporta múltiplos formatos)
+   - Listar IPs extraídos
+   - Analisar IPs usando diferentes serviços:
+     - VirusTotal (reputação e análises)
+     - AbuseIPDB (histórico de abusos)
+     - IPInfo (geolocalização e informações adicionais)
+   - Gerar consultas KQL para:
+     - IPs de origem
+     - IPs de destino
+     - Ambos (origem ou destino)
+   - Criar relatórios detalhados de análise
 
-## Distribution
+## Exemplos de Uso
 
-To create a distributable package:
+1. **Análise de um IP:**
+   - Cole o IP quando solicitado
+   - Escolha a opção de análise desejada
+   - Veja os resultados formatados na tela
 
+2. **Análise de múltiplos IPs:**
+   - Cole a lista de IPs (um por linha)
+   - Pressione Enter duas vezes para finalizar
+   - Escolha a opção de análise
+   - Os resultados serão exibidos em uma tabela organizada
+
+3. **Geração de Query KQL:**
+   - Insira os IPs
+   - Escolha o tipo de query (source/destination/both)
+   - Copie a query gerada para usar no Kibana
+
+## Dependências
+
+O arquivo `requirements.txt` inclui todas as dependências necessárias:
+- python-dotenv (gerenciamento de variáveis de ambiente)
+- requests (requisições HTTP para as APIs)
+- rich (interface CLI colorida e formatada)
+
+## Contribuindo
+
+1. Faça um fork do repositório
+2. Crie sua branch de funcionalidade:
 ```powershell
-.\package.bat
+git checkout -b feature/NovaFuncionalidade
 ```
+3. Faça commit das alterações:
+```powershell
+git commit -m "Adiciona nova funcionalidade"
+```
+4. Envie sua branch:
+```powershell
+git push origin feature/NovaFuncionalidade
+```
+5. Abra um Pull Request
 
-This will create a ZIP file containing all necessary files for distribution.
+## Licença
 
-## Dependencies
+Este projeto está licenciado sob a Licença MIT — consulte o arquivo [LICENSE](LICENSE) para mais detalhes.
 
-All required packages are listed in `requirements.txt` and will be installed automatically by the installation script:
+## Agradecimentos
 
-- python-dotenv
-- requests
-- rich
-- [other dependencies]
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- Thanks to VirusTotal, AbuseIPDB, and IPInfo for their excellent APIs
-- Built for SOC analysts by SOC analysts
+- Agradecimentos ao VirusTotal, AbuseIPDB e IPInfo por suas excelentes APIs
+- Construído por analistas de SOC para analistas de SOC
