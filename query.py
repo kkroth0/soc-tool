@@ -9,6 +9,13 @@ from rich import box
 from dotenv import load_dotenv
 import os
 from datetime import datetime
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+import io
+from PIL import Image as PILImage
 
 # Inicializa o console rich
 console = Console()
@@ -18,6 +25,22 @@ load_dotenv()
 VT_API_KEY = os.getenv('VIRUSTOTAL_API_KEY')
 ABUSEIPDB_API_KEY = os.getenv('ABUSEIPDB_API_KEY')
 IPINFO_API_KEY = os.getenv('IPINFO_API_KEY')
+
+# Configuração dos estilos do PDF
+styles = getSampleStyleSheet()
+title_style = ParagraphStyle(
+    'CustomTitle',
+    parent=styles['Heading1'],
+    fontSize=24,
+    spaceAfter=30
+)
+heading_style = ParagraphStyle(
+    'CustomHeading',
+    parent=styles['Heading2'],
+    fontSize=18,
+    spaceAfter=12
+)
+normal_style = styles['Normal']
 
 def extrair_ips(texto: str) -> List[str]:
     """Extrai IPs válidos do texto"""
@@ -215,7 +238,8 @@ def display_menu():
 [green]7.[/green] Gerar query KQL (destination.ip)
 [green]8.[/green] Gerar query KQL (ambos)
 [green]9.[/green] Gerar Relatório Detalhado
-[green]10.[/green] Sair
+[green]10.[/green] Gerar Relatório em PDF
+[green]11.[/green] Sair
 """
     console.print(Panel(menu, title="SOC Forge", border_style="cyan"))
 
@@ -390,6 +414,112 @@ def save_report(ips: List[str], filename: str = "scan_report.txt"):
     
     return filename
 
+def generate_pdf_report(ips: List[str], results: Dict) -> str:
+    """Gera um relatório PDF com os resultados da análise"""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"ip_analysis_report_{timestamp}.pdf"
+    
+    doc = SimpleDocTemplate(
+        filename,
+        pagesize=letter,
+        rightMargin=72,
+        leftMargin=72,
+        topMargin=72,
+        bottomMargin=72
+    )
+    
+    # Lista de elementos do PDF
+    elements = []
+    
+    # Título
+    elements.append(Paragraph("Relatório de Análise de IPs", title_style))
+    elements.append(Spacer(1, 12))
+    
+    # Data do relatório
+    elements.append(Paragraph(f"Gerado em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}", normal_style))
+    elements.append(Spacer(1, 12))
+    
+    # Resumo
+    elements.append(Paragraph("IPs Analisados:", heading_style))
+    for ip in ips:
+        elements.append(Paragraph(f"• {ip}", normal_style))
+    elements.append(Spacer(1, 20))
+    
+    # Capturando saída do Rich Console
+    console_capture = io.StringIO()
+    console_file = Console(file=console_capture, force_terminal=True)
+    
+    for ip in ips:
+        # Resultados do VirusTotal
+        if "virustotal" in results[ip]:
+            elements.append(Paragraph(f"Análise VirusTotal para {ip}:", heading_style))
+            vt_result = results[ip]["virustotal"]
+            
+            if "error" not in vt_result:
+                vt_table = Table(title=f"VirusTotal - {ip}", box=box.DOUBLE_EDGE)
+                vt_table.add_column("Detecções Maliciosas", style="red")
+                vt_table.add_column("Detecções Suspeitas", style="yellow")
+                vt_table.add_row(str(vt_result["malicious"]), str(vt_result["suspicious"]))
+                
+                # Captura a tabela como texto
+                console_file.print(vt_table)
+                elements.append(Paragraph(console_capture.getvalue(), normal_style))
+                console_capture.seek(0)
+                console_capture.truncate()
+            
+            elements.append(Spacer(1, 12))
+        
+        # Resultados do AbuseIPDB
+        if "abuseipdb" in results[ip]:
+            elements.append(Paragraph(f"Análise AbuseIPDB para {ip}:", heading_style))
+            abuse_result = results[ip]["abuseipdb"]
+            
+            if "error" not in abuse_result:
+                abuse_table = Table(title=f"AbuseIPDB - {ip}", box=box.DOUBLE_EDGE)
+                abuse_table.add_column("Pontuação de Abuso")
+                abuse_table.add_column("Total de Relatórios")
+                abuse_table.add_column("País")
+                abuse_table.add_row(
+                    str(abuse_result["abuseConfidenceScore"]),
+                    str(abuse_result["totalReports"]),
+                    abuse_result.get("countryCode", "N/A")
+                )
+                
+                console_file.print(abuse_table)
+                elements.append(Paragraph(console_capture.getvalue(), normal_style))
+                console_capture.seek(0)
+                console_capture.truncate()
+            
+            elements.append(Spacer(1, 12))
+        
+        # Resultados do IPInfo
+        if "ipinfo" in results[ip]:
+            elements.append(Paragraph(f"Análise IPInfo para {ip}:", heading_style))
+            ipinfo_result = results[ip]["ipinfo"]
+            
+            if "error" not in ipinfo_result:
+                ipinfo_table = Table(title=f"IPInfo - {ip}", box=box.DOUBLE_EDGE)
+                ipinfo_table.add_column("País")
+                ipinfo_table.add_column("Cidade")
+                ipinfo_table.add_column("Organização")
+                ipinfo_table.add_row(
+                    ipinfo_result.get("country", "N/A"),
+                    ipinfo_result.get("city", "N/A"),
+                    ipinfo_result.get("org", "N/A")
+                )
+                
+                console_file.print(ipinfo_table)
+                elements.append(Paragraph(console_capture.getvalue(), normal_style))
+                console_capture.seek(0)
+                console_capture.truncate()
+            
+            elements.append(Spacer(1, 12))
+    
+    # Gera o PDF
+    doc.build(elements)
+    console.print(f"\n[green]Relatório PDF gerado:[/green] {filename}")
+    return filename
+
 def main():
     console.print("[bold cyan]SOC Forge - Analisador de IPs[/bold cyan]")
     console.print("\n[yellow]Cole a lista de IPs (pressione Enter duas vezes para finalizar):[/yellow]")
@@ -412,6 +542,11 @@ def main():
         return
     
     console.print(f"\n[green]IPs válidos encontrados:[/green] {len(ips)}")
+    for i, ip in enumerate(ips, 1):
+        console.print(f"[cyan]{i}.[/cyan] {ip}")
+        
+    # Dicionário para armazenar resultados de todas as análises
+    results = {ip: {} for ip in ips}
     
     while True:
         display_menu()
@@ -470,6 +605,19 @@ def main():
             console.print(f"\n[green]Relatório detalhado salvo em: {filename}[/green]")
             
         elif escolha == "10":
+            # Gerar Relatório em PDF
+            results = {}
+            for ip in ips:
+                results[ip] = {
+                    "virustotal": check_virustotal(ip),
+                    "abuseipdb": check_abuseipdb(ip),
+                    "ipinfo": check_ipinfo(ip)
+                }
+            
+            filename = generate_pdf_report(ips, results)
+            console.print(f"\n[green]Relatório PDF salvo em: {filename}[/green]")
+        
+        elif escolha == "11":
             console.print("[yellow]Encerrando programa...[/yellow]")
             break
             
