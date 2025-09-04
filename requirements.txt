@@ -1,3 +1,15 @@
-rich==13.9.4
-python-dotenv==1.0.1
-requests==2.32.3
+# SOC Forge v2.0 - Requirements
+# Core dependencies
+requests>=2.32.3
+rich>=13.9.4
+python-dotenv>=1.0.1
+
+# Report generation
+reportlab>=4.0.0
+pillow>=10.0.0
+
+# Development dependencies (optional)
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+flake8>=6.0.0

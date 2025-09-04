@@ -1,5 +1,8 @@
+# SOC Forge v2.0 - GitIgnore
+
 # Environment variables
 .env
+.env.local
 
 # Python
 __pycache__/
@@ -25,13 +28,31 @@ var/
 
 # Distribution / packaging
 *.zip
-
-# Reports
-scan_report.txt
+*.tar.gz
 
 # Virtual Environment
+.venv/
 venv/
 ENV/
+env/
+
+# Generated outputs (keep directory structure but ignore content)
+outputs/reports/*.pdf
+outputs/reports/*.json
+outputs/reports/*.txt
+outputs/logs/*.log
+outputs/logs/*.txt
+
+# Legacy files (should be cleaned up)
+query.py.bak
+scan_report*.txt
+ip_analysis_report*.pdf
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+test_*.py.bak
 
 # IDE
 .idea/
@@ -42,3 +63,7 @@ ENV/
 # OS
 .DS_Store
 Thumbs.db
+*.tmp
+
+# Claude Code specific
+.claude/
