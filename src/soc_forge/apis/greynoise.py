@@ -24,17 +24,18 @@ class GreyNoiseClient(BaseAPIClient):
     
     def check_ip(self, ip: str) -> APIResult:
         """
-        Check IP against GreyNoise context data
-        
+        Check IP against GreyNoise Community API
+
         Args:
             ip: IP address to check
-            
+
         Returns:
             APIResult with GreyNoise context data
         """
+        # Use Community API endpoint which is free
         result = self._make_request(
             method="GET",
-            endpoint=f"/context/{ip}"
+            endpoint=f"/community/{ip}"
         )
         
         if not result.success:

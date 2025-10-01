@@ -9,8 +9,9 @@ from .base import BaseAPIClient, APIResult
 
 class ThreatFoxClient(BaseAPIClient):
     """Client for ThreatFox API"""
-    
-    def __init__(self, api_key: str):
+
+    def __init__(self, api_key: str = "public"):
+        # ThreatFox API is free and doesn't require authentication
         super().__init__(
             api_key=api_key,
             base_url="https://threatfox-api.abuse.ch/api/v1",
@@ -20,10 +21,10 @@ class ThreatFoxClient(BaseAPIClient):
     def check_ip(self, ip: str) -> APIResult:
         """
         Search for IP in ThreatFox IOCs
-        
+
         Args:
             ip: IP address to check
-            
+
         Returns:
             APIResult with ThreatFox data
         """
@@ -31,10 +32,11 @@ class ThreatFoxClient(BaseAPIClient):
             "query": "search_ioc",
             "search_term": ip
         }
-        
+
+        # ThreatFox doesn't require auth headers, just POST the data
         result = self._make_request(
             method="POST",
-            endpoint="/",
+            endpoint="",
             json_data=payload
         )
         

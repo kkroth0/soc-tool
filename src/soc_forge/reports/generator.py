@@ -14,6 +14,7 @@ from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 from reportlab.platypus.flowables import HRFlowable
 import json
+from ..utils.threat_scoring import ThreatScorer
 
 
 @dataclass
@@ -112,7 +113,7 @@ class ReportGenerator:
         story.append(Paragraph("Executive Summary", self.heading_style))
         
         # Calculate threat statistics
-        threat_stats = self._calculate_threat_statistics(analysis_results)
+        threat_stats = ThreatScorer.calculate_threat_statistics(analysis_results)
         
         executive_text = f"""
         This report provides a high-level assessment of {len(analysis_results)} IP addresses analyzed 
@@ -260,8 +261,8 @@ class ReportGenerator:
             story.append(Paragraph(f"Analysis: {ip}", self.heading_style))
             
             # Calculate threat score for this IP
-            threat_score = self._calculate_ip_threat_score(result.data)
-            threat_level = self._get_threat_level(threat_score)
+            threat_score = ThreatScorer.calculate_ip_threat_score(result.data)
+            threat_level = ThreatScorer.get_threat_level(threat_score)
             
             # IP summary table
             ip_summary = [
@@ -318,7 +319,7 @@ class ReportGenerator:
                 "analysis_time_ms": result.analysis_time_ms,
                 "sources_queried": result.sources_queried,
                 "sources_successful": result.sources_successful,
-                "threat_score": self._calculate_ip_threat_score(result.data),
+                "threat_score": ThreatScorer.calculate_ip_threat_score(result.data),
                 "data": result.data,
                 "error": result.error
             }
@@ -328,63 +329,6 @@ class ReportGenerator:
         
         return filepath
     
-    def _calculate_threat_statistics(self, results: Dict[str, Any]) -> Dict[str, int]:
-        """Calculate overall threat statistics"""
-        stats = {"high_risk": 0, "medium_risk": 0, "low_risk": 0}
-        
-        for result in results.values():
-            if not result.success:
-                continue
-                
-            threat_score = self._calculate_ip_threat_score(result.data)
-            
-            if threat_score >= 70:
-                stats["high_risk"] += 1
-            elif threat_score >= 30:
-                stats["medium_risk"] += 1
-            else:
-                stats["low_risk"] += 1
-        
-        return stats
-    
-    def _calculate_ip_threat_score(self, data: Dict[str, Any]) -> int:
-        """Calculate threat score for individual IP"""
-        score = 0
-        
-        # VirusTotal scoring
-        if 'virustotal' in data and data['virustotal'].get('found'):
-            vt = data['virustotal']
-            score += min(40, vt.get('malicious', 0) * 4)
-            score += min(20, vt.get('suspicious', 0) * 2)
-        
-        # AbuseIPDB scoring
-        if 'abuseipdb' in data and data['abuseipdb'].get('found'):
-            abuse = data['abuseipdb']
-            score += min(25, int(abuse.get('confidence_score', 0) * 0.25))
-        
-        # GreyNoise scoring
-        if 'greynoise' in data and data['greynoise'].get('found'):
-            gn = data['greynoise']
-            if gn.get('malicious'):
-                score += 20
-            elif gn.get('classification') == 'suspicious':
-                score += 10
-        
-        # ThreatFox scoring
-        if 'threatfox' in data and data['threatfox'].get('found'):
-            tf = data['threatfox']
-            score += min(30, tf.get('ioc_count', 0) * 5)
-        
-        return min(100, score)
-    
-    def _get_threat_level(self, threat_score: int) -> str:
-        """Get threat level from score"""
-        if threat_score >= 70:
-            return "HIGH RISK"
-        elif threat_score >= 30:
-            return "MEDIUM RISK"
-        else:
-            return "LOW RISK"
     
     def _get_high_priority_ips(self, results: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Get high priority IPs for executive summary"""
@@ -393,10 +337,10 @@ class ReportGenerator:
         for ip, result in results.items():
             if not result.success:
                 continue
-                
-            threat_score = self._calculate_ip_threat_score(result.data)
+
+            threat_score = ThreatScorer.calculate_ip_threat_score(result.data)
             if threat_score >= 70:
-                findings = self._extract_key_findings(result.data)
+                findings = ThreatScorer.extract_key_findings(result.data)
                 high_priority.append({
                     "ip": ip,
                     "threat_score": threat_score,
@@ -427,12 +371,23 @@ class ReportGenerator:
     def _format_source_findings(self, source: str, data: Dict[str, Any]) -> str:
         """Format findings from specific source"""
         if source == 'virustotal':
-            return f"""
+            content = f"""
+            Detection ratio: {data.get('vendor_detection_ratio', '0/0')}<br/>
             Malicious detections: {data.get('malicious', 0)}<br/>
             Suspicious detections: {data.get('suspicious', 0)}<br/>
+            Harmless detections: {data.get('harmless', 0)}<br/>
             Total engines: {data.get('total_engines', 0)}<br/>
-            Reputation score: {data.get('reputation', 'N/A')}
+            Reputation score: {data.get('reputation', 'N/A')}<br/>
             """
+
+            # Add top detecting engines
+            engines_detected = data.get('engines_detected', [])
+            if engines_detected:
+                content += "<br/><b>Top Detecting Engines:</b><br/>"
+                for engine in engines_detected[:5]:  # Top 5
+                    content += f"• {engine.get('engine', 'Unknown')}: {engine.get('result', 'N/A')}<br/>"
+
+            return content
         elif source == 'abuseipdb':
             return f"""
             Abuse confidence: {data.get('confidence_score', 0)}%<br/>

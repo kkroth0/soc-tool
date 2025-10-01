@@ -15,7 +15,10 @@ from ..apis.abuseipdb import AbuseIPDBClient
 from ..apis.ipinfo import IPInfoClient
 from ..apis.threatfox import ThreatFoxClient
 from ..apis.greynoise import GreyNoiseClient
+from ..apis.shodan import ShodanClient
+from ..apis.otx import OTXClient
 from ..apis.base import APIResult
+from ..utils.threat_scoring import ThreatScorer
 
 
 @dataclass
@@ -48,13 +51,20 @@ class IPAnalyzer:
         
         if api_keys.get('ipinfo'):
             self.clients['ipinfo'] = IPInfoClient(api_keys['ipinfo'])
-        
+
+        # ThreatFox requires authentication now - only enable if key is provided
         if api_keys.get('threatfox'):
             self.clients['threatfox'] = ThreatFoxClient(api_keys['threatfox'])
-        
+
         if api_keys.get('greynoise'):
             self.clients['greynoise'] = GreyNoiseClient(api_keys['greynoise'])
-        
+
+        if api_keys.get('shodan'):
+            self.clients['shodan'] = ShodanClient(api_keys['shodan'])
+
+        if api_keys.get('otx'):
+            self.clients['otx'] = OTXClient(api_keys['otx'])
+
         self.logger.info(f"Initialized analyzer with {len(self.clients)} API sources")
     
     def analyze_single_ip(self, ip: str, sources: Optional[List[str]] = None) -> AnalysisResult:
@@ -196,35 +206,19 @@ class IPAnalyzer:
         # Simplify results for quick assessment
         quick_results = {}
         for ip, result in results.items():
+            threat_score = ThreatScorer.calculate_ip_threat_score(result.data)
+            threat_level = ThreatScorer.get_threat_level(threat_score)
+
             quick_results[ip] = {
-                'threat_level': self._assess_quick_threat_level(result.data),
+                'threat_level': threat_level,
+                'threat_score': threat_score,
                 'sources_checked': result.sources_successful,
-                'analysis_time_ms': result.analysis_time_ms
+                'analysis_time_ms': result.analysis_time_ms,
+                'key_findings': ThreatScorer.extract_key_findings(result.data)
             }
-        
+
         return quick_results
     
-    def _assess_quick_threat_level(self, data: Dict[str, Any]) -> str:
-        """Assess threat level from quick check data"""
-        
-        # Check GreyNoise classification
-        if 'greynoise' in data:
-            gn_data = data['greynoise']
-            if gn_data.get('malicious'):
-                return 'HIGH'
-            elif gn_data.get('classification') == 'benign':
-                return 'LOW'
-        
-        # Check AbuseIPDB confidence
-        if 'abuseipdb' in data:
-            abuse_data = data['abuseipdb']
-            confidence = abuse_data.get('confidence_score', 0)
-            if confidence >= 75:
-                return 'HIGH'
-            elif confidence >= 25:
-                return 'MEDIUM'
-        
-        return 'LOW'
     
     def get_available_sources(self) -> List[str]:
         """Get list of available API sources"""

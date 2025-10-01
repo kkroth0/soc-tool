@@ -67,6 +67,10 @@ class VirusTotalClient(BaseAPIClient):
             "malware_families": [],
             "categories": [],
             "engines_detected": [],
+            "engines_clean": [],
+            "engines_timeout": [],
+            "engines_detailed": {},
+            "vendor_detection_ratio": "0/0",
             "raw_data": raw_data
         }
         
@@ -117,20 +121,39 @@ class VirusTotalClient(BaseAPIClient):
                 categories.add(attributes["categories"][source])
         parsed["categories"] = list(categories)
         
-        # Engines that detected the IP as malicious
+        # Detailed engine analysis results
         results = attributes.get("last_analysis_results", {})
         engines_detected = []
+        engines_clean = []
+        engines_timeout = []
+
         for engine_name, engine_result in results.items():
-            if engine_result.get("category") in ["malicious", "suspicious"]:
-                engines_detected.append({
-                    "engine": engine_name,
-                    "category": engine_result.get("category"),
-                    "result": engine_result.get("result"),
-                    "method": engine_result.get("method")
-                })
-        
+            engine_info = {
+                "engine": engine_name,
+                "category": engine_result.get("category"),
+                "result": engine_result.get("result"),
+                "method": engine_result.get("method"),
+                "engine_version": engine_result.get("engine_version"),
+                "engine_update": engine_result.get("engine_update")
+            }
+
+            category = engine_result.get("category")
+            if category in ["malicious", "suspicious"]:
+                engines_detected.append(engine_info)
+            elif category == "harmless":
+                engines_clean.append(engine_info)
+            elif category == "timeout":
+                engines_timeout.append(engine_info)
+
         parsed["engines_detected"] = engines_detected
-        
+        parsed["engines_clean"] = engines_clean
+        parsed["engines_timeout"] = engines_timeout
+        parsed["engines_detailed"] = results
+
+        # Calculate vendor detection ratio
+        total_detected = parsed["malicious"] + parsed["suspicious"]
+        parsed["vendor_detection_ratio"] = f"{total_detected}/{parsed['total_engines']}"
+
         return parsed
     
     def get_ip_comments(self, ip: str, limit: int = 10) -> APIResult:
