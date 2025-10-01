@@ -1,4 +1,5 @@
-# 🛡️ SOC Forge v2.0
+# <img width="389" height="441" alt="image" src="https://github.com/user-attachments/assets/53402a47-0799-4347-822b-e559c46935c0" />
+ SOC Forge v2.0
 
 **SOC Forge** is an advanced IP threat intelligence platform designed for Security Operations Center (SOC) analysts. It provides comprehensive IP analysis across multiple threat intelligence sources with an intuitive CLI interface, automated reporting, and advanced analytics capabilities.
 
